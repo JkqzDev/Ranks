@@ -10,11 +10,22 @@ use poggit\libasynql\DataConnector;
 use poggit\libasynql\libasynql;
 
 final class SQLDataStorer {
-    use SingletonTrait;
+    use SingletonTrait {
+        setInstance as protected;
+        reset as protected;
+    }
 
     private const CREATE_PLAYERS_TABLE = 'tables.players';
 
+    public const INSERT_PLAYER = 'insert.player';
+    public const GET_PLAYER = 'get.player';
+    public const UPDATE_PLAYER = 'update.player';
+
     private DataConnector $connector;
+
+    public function getConnector(): DataConnector {
+        return $this->connector;
+    }
 
     public function load(): void {
         $config = Ranks::getInstance()->getConfig();
@@ -24,6 +35,7 @@ final class SQLDataStorer {
         $this->connector->executeGeneric(self::CREATE_PLAYERS_TABLE);
         $this->connector->waitAll();
     }
+
     public function save(): void {
         $this->connector->waitAll();
         $this->connector->close();

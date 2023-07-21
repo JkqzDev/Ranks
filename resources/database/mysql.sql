@@ -3,34 +3,34 @@
 -- #    { players
 CREATE TABLE IF NOT EXISTS players (
     id INT UNSIGNED AUTO_INCREMENT,
-    xuid VARCHAR(100) PRIMARY KEY,
+    playerXuid VARCHAR(100) PRIMARY KEY,
     playerName VARCHAR(100) NOT NULL,
     primaryRank VARCHAR(100) NOT NULL,
     secondaryRank VARCHAR(100) DEFAULT '',
     permissions VARCHAR(10000) DEFAULT '',
     PRIMARY KEY (id),
-    UNIQUE KEY `xuid` (xuid)
+    UNIQUE KEY `playerXuid` (playerXuid)
 );
 -- #    }
 -- #}
 -- #{ insert.player
--- #    :xuid string
+-- #    :playerXuid string
 -- #    :playerName string
 -- #    :primaryRank string
-INSERT INTO players (xuid, playerName, primaryRank)
-VALUE (:xuid, :playerName, :primaryRank);
+INSERT INTO players (playerXuid, playerName, primaryRank)
+VALUE (:playerXuid, :playerName, :primaryRank);
 -- #}
 -- #{ get.player
--- #    :xuid string
+-- #    :playerXuid string
 SELECT * FROM players
-WHERE xuid = :xuid;
+WHERE playerXuid = :playerXuid;
 -- #}
 -- #{ update.player
--- #    :xuid string
+-- #    :playerXuid string
 -- #    :playerName string
 -- #    :primaryRank string
 -- #    :secondaryRank string
 -- #    :permissions string
 UPDATE players SET playerName = :playerName, primaryRank = :primaryRank, secondaryRank = :secondaryRank, permissions = :permissions
-WHERE xuid = :xuid;
+WHERE playerXuid = :playerXuid;
 -- #}

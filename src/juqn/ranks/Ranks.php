@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace juqn\ranks;
 
+use juqn\ranks\handler\SessionHandler;
+use juqn\ranks\rank\RankManager;
 use juqn\ranks\storer\SQLDataStorer;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
@@ -16,10 +18,15 @@ final class Ranks extends PluginBase {
 
     protected function onLoad(): void {
         self::setInstance($this);
+
         $this->saveDefaultConfig();
+        $this->saveResource('ranks.yml');
     }
 
     protected function onEnable(): void {
+        $this->getServer()->getPluginManager()->registerEvents(new SessionHandler(), $this);
+
+        RankManager::getInstance()->load();
         SQLDataStorer::getInstance()->load();
     }
 

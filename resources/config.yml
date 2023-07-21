@@ -1,6 +1,16 @@
 # Plugin config
 # Version 2.0.0
 
+# Ranks config
+default-rank: 'user'
+
+apply-nametag-format: false
+apply-chat-format: true
+
+chat-format: '{primaryRank}{secondaryRank}&7{player}: &f{message}'
+nametag-format: '{primaryRank}{secondaryRank}&7{player}'
+
+# Database config
 database:
   type: mysql
   sqlite:

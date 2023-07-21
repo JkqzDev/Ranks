@@ -10,7 +10,8 @@ final class Rank {
         private readonly int $id,
         private readonly string $name,
         private readonly string $color,
-        private readonly array $permissions
+        private readonly array $permissions,
+        private readonly bool $isPrimary
     ) {}
 
     public function getId(): int {
@@ -23,6 +24,10 @@ final class Rank {
 
     public function getColor(): string {
         return $this->color;
+    }
+
+    public function isPrimary(): bool {
+        return $this->isPrimary;
     }
 
     public function getPermissions(): array {

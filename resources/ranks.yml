@@ -1,0 +1,10 @@
+primary-ranks:
+  user:
+    name: 'USER'
+    color: '&7'
+    permissions: []
+secondary-ranks:
+  vip:
+    name: 'VIP'
+    color: '&d'
+    permissions: []
