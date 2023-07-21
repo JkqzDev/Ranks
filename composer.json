@@ -1,0 +1,9 @@
+{
+  "require": {
+    "pocketmine/pocketmine-mp": "5.3.2",
+    "sof3/libasynql": "dev-pm5"
+  },
+  "scripts": {
+    "make-plugin": "@php -dphar.readonly=0 tools/build-phar.php --make ./ --out output/Economy.phar"
+  }
+}
