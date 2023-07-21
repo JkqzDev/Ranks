@@ -4,6 +4,6 @@
     "sof3/libasynql": "dev-pm5"
   },
   "scripts": {
-    "make-plugin": "@php -dphar.readonly=0 tools/build-phar.php --make ./ --out output/Economy.phar"
+    "make-plugin": "@php -dphar.readonly=0 tools/build-phar.php --make ./ --out output/Ranks.phar"
   }
 }

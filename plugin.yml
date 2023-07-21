@@ -1,0 +1,5 @@
+name: Ranks
+version: 2.0.0
+author: JuqnGOOD
+main: juqn\ranks\Ranks
+api: 5.0.0

@@ -1,0 +1,12 @@
+# Plugin config
+# Version 2.0.0
+
+database:
+  type: mysql
+  sqlite:
+    file: database.sqlite
+  mysql:
+    host: juqngood
+    password: juqngood
+    schema: juqn
+  worker-limit: 2
