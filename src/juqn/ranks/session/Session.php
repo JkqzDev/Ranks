@@ -42,7 +42,7 @@ final class Session {
                         [
                             'playerXuid' => $this->player->getXuid(),
                             'playerName' => $this->player->getName(),
-                            'primaryRank' => $defaultRank->getName()
+                            'primaryRank' => $defaultRank->getEnumName()
                         ]
                     );
                 } else {
@@ -67,6 +67,10 @@ final class Session {
 
     public function getSecondaryRank(): ?Rank {
         return $this->secondaryRank;
+    }
+
+    public function getPermissions(): array {
+        return $this->permissions;
     }
 
     public function existsPermission(string $permission): bool {
@@ -120,8 +124,8 @@ final class Session {
                 [
                     'playerXuid' => $this->player->getXuid(),
                     'playerName' => $this->player->getName(),
-                    'primaryRank' => $this->primaryRank->getName(),
-                    'secondaryRank' => $this->secondaryRank?->getName() ?? '',
+                    'primaryRank' => $this->primaryRank->getEnumName(),
+                    'secondaryRank' => $this->secondaryRank?->getEnumName() ?? '',
                     'permissions' => implode(',', $this->permissions)
                 ]
             );

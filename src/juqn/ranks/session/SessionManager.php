@@ -16,6 +16,10 @@ final class SessionManager {
     /** @var Session[] */
     private array $sessions = [];
 
+    public function getSessions(): array {
+        return $this->sessions;
+    }
+
     public function getSession(Player $player): ?Session {
         return $this->sessions[$player->getXuid()] ?? null;
     }

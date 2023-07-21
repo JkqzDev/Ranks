@@ -3,7 +3,7 @@
 -- #    { players
 CREATE TABLE IF NOT EXISTS players (
     id INT UNSIGNED AUTO_INCREMENT,
-    playerXuid VARCHAR(100) PRIMARY KEY,
+    playerXuid VARCHAR(100) NOT NULL,
     playerName VARCHAR(100) NOT NULL,
     primaryRank VARCHAR(100) NOT NULL,
     secondaryRank VARCHAR(100) DEFAULT '',
@@ -20,10 +20,17 @@ CREATE TABLE IF NOT EXISTS players (
 INSERT INTO players (playerXuid, playerName, primaryRank)
 VALUE (:playerXuid, :playerName, :primaryRank);
 -- #}
--- #{ get.player
--- #    :playerXuid string
+-- #{ get
+-- #    { player.xuid
+-- #        :playerXuid string
 SELECT * FROM players
 WHERE playerXuid = :playerXuid;
+-- #    }
+-- #    { player.name
+-- #        :playerName string
+SELECT * FROM players
+WHERE playerName = :playerName;
+-- #    }
 -- #}
 -- #{ update.player
 -- #    :playerXuid string

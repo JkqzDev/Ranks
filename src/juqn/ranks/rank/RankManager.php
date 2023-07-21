@@ -30,7 +30,7 @@ final class RankManager {
         $id = 0;
 
         foreach ($totalRanks as $rankName => $rankData) {
-            $this->ranks[$rankName] = new Rank($id, $rankData['name'], $rankData['color'], $rankData['permissions'] ?? [], isset($ranks->get('primary-ranks', [])[$rankName]));
+            $this->ranks[$rankName] = new Rank($id, $rankName, $rankData['name'], $rankData['color'], $rankData['permissions'] ?? [], isset($ranks->get('primary-ranks', [])[$rankName]));
             $id++;
         }
 
