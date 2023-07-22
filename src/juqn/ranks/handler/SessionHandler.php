@@ -28,7 +28,7 @@ final class SessionHandler implements Listener {
         if ($config->get('apply-chat-format')) {
             $primaryRank = $session->getPrimaryRank();
             $secondaryRank = $session->getSecondaryRank();
-            $chatFormat = str_replace(['{primaryRank}', '{secondaryRank}', '{player}', '{message}'], [$primaryRank->getColor() . $primaryRank->getName() . ' ', $secondaryRank !== null ? $secondaryRank->getColor() . $secondaryRank->getName() . ' ' : '', $player->getName(), $event->getMessage()], $config->get('chat-format', ''));
+            $chatFormat = str_replace(['{primaryRank}', '{secondaryRank}', '{player}', '{message}'], [$primaryRank->getName() !== '' ? $primaryRank->getColor() . $primaryRank->getName() . ' ' : '', $secondaryRank !== null ? $secondaryRank->getColor() . $secondaryRank->getName() . ' ' : '', $player->getName(), $event->getMessage()], $config->get('chat-format', ''));
 
             $event->setFormatter(new LegacyRawChatFormatter(TextFormat::colorize($chatFormat)));
         }

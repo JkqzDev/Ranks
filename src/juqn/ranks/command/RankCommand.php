@@ -37,7 +37,8 @@ final class RankCommand extends Command {
                     '&l&dRank commands&r',
                     '&d/rank info <player> &7- Use command to see player information',
                     '&d/rank set <type> &7- Use command to set primary or secondary rank',
-                    '&d/rank remove <player> &7- Use command to remove player\'s rank'
+                    '&d/rank remove <player> &7- Use command to remove player\'s rank',
+                    '&d/rank list &7- Use command to see rank list'
                 ];
                 $sender->sendMessage(TextFormat::colorize(implode(PHP_EOL, $messages)));
                 break;
@@ -262,6 +263,20 @@ final class RankCommand extends Command {
                         $sender->sendMessage(TextFormat::colorize('&cYou have been removed ' . $data['playerName'] . '\'s rank'));
                     }
                 );
+                break;
+
+            case 'list':
+                $primaryRanks = array_filter(RankManager::getInstance()->getRanks(), fn(Rank $rank) => $rank->isPrimary());
+                $secondaryRanks = array_filter(RankManager::getInstance()->getRanks(), fn(Rank $rank) => !$rank->isPrimary());
+
+                $sender->sendMessage(TextFormat::colorize('&dPrimary ranks &7(' . count($primaryRanks) . ' total)'));
+                $sender->sendMessage(TextFormat::colorize(implode(PHP_EOL, array_map(fn(Rank $rank) => '&7' . $rank->getEnumName() . ': ' . $rank->getColor() . $rank->getName(), $primaryRanks))));
+
+                if (count($secondaryRanks) !== 0) {
+                    $sender->sendMessage(PHP_EOL);
+                    $sender->sendMessage(TextFormat::colorize('&dSecondary ranks &7(' . count($secondaryRanks) . ' total)'));
+                    $sender->sendMessage(TextFormat::colorize(implode(PHP_EOL, array_map(fn(Rank $rank) => '&7' . $rank->getEnumName() . ': ' . $rank->getColor() . $rank->getName(), $secondaryRanks))));
+                }
                 break;
 
             default:
