@@ -37,6 +37,5 @@ final class RankManager {
         if (!isset($this->ranks[$config->get('default-rank', 'user')])) {
             throw new \RuntimeException('Invalid default rank');
         }
-        var_dump(array_values($this->ranks));
     }
 }
