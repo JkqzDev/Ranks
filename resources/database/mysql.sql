@@ -32,12 +32,21 @@ SELECT * FROM players
 WHERE playerName = :playerName;
 -- #    }
 -- #}
--- #{ update.player
--- #    :playerXuid string
--- #    :playerName string
--- #    :primaryRank string
--- #    :secondaryRank string
--- #    :permissions string
+-- #{ update
+-- #    { player.xuid
+-- #        :playerXuid string
+-- #        :playerName string
+-- #        :primaryRank string
+-- #        :secondaryRank string
+-- #        :permissions string
 UPDATE players SET playerName = :playerName, primaryRank = :primaryRank, secondaryRank = :secondaryRank, permissions = :permissions
 WHERE playerXuid = :playerXuid;
+-- #    }
+-- #    { player.name
+-- #        :playerName string
+-- #        :primaryRank string
+-- #        :secondaryRank string
+UPDATE players SET primaryRank = :primaryRank, secondaryRank = :secondaryRank
+WHERE playerName = :playerName;
+-- #    }
 -- #}

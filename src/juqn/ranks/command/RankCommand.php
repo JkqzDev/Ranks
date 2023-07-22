@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace juqn\ranks\command;
 
+use juqn\ranks\rank\Rank;
 use juqn\ranks\rank\RankManager;
 use juqn\ranks\Ranks;
 use juqn\ranks\session\SessionManager;
@@ -31,6 +32,16 @@ final class RankCommand extends Command {
         }
 
         switch (strtolower($args[0])) {
+            case 'help':
+                $messages = [
+                    '&l&dRank commands&r',
+                    '&d/rank info <player> &7- Use command to see player information',
+                    '&d/rank set <type> &7- Use command to set primary or secondary rank',
+                    '&d/rank remove <player> &7- Use command to remove player\'s rank'
+                ];
+                $sender->sendMessage(TextFormat::colorize(implode(PHP_EOL, $messages)));
+                break;
+
             case 'info':
                 if (count($args) < 2) {
                     $sender->sendMessage(TextFormat::colorize('&cUse /rank info [player]'));
@@ -84,6 +95,175 @@ final class RankCommand extends Command {
                     }
                 );
                 break;
+
+            case 'set':
+                if (count($args) < 2) {
+                    $sender->sendMessage(TextFormat::colorize('&cUse /rank set [type]'));
+                    return;
+                }
+
+                if (strtolower($args[1]) === 'primary') {
+                    if (count($args) < 4) {
+                        $sender->sendMessage(TextFormat::colorize('&cUse /rank set primary [player] [rank]'));
+                        return;
+                    }
+                    $player = $sender->getServer()->getPlayerByPrefix($args[2]);
+                    $rankName = $args[3];
+
+                    $primaryRanks = array_filter(RankManager::getInstance()->getRanks(), fn(Rank $rank) => $rank->isPrimary());
+                    $rank = $primaryRanks[$rankName] ?? null;
+
+                    if ($rank === null) {
+                        $sender->sendMessage(TextFormat::colorize('&cPrimary rank no exists.'));
+                        return;
+                    }
+
+                    if ($player !== null) {
+                        $session = SessionManager::getInstance()->getSession($player);
+
+                        if ($session === null) {
+                            $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                            return;
+                        }
+                        $session->setPrimaryRank($rank);
+                        $player->sendMessage(TextFormat::colorize('&aYou have been received main rank ' . $rank->getColor() . $rank->getName()));
+                        $sender->sendMessage(TextFormat::colorize('&aYou have been added main rank ' . $rank->getColor() . $rank->getName() . ' &r&ato ' . $player->getName()));
+                        return;
+                    }
+                    SQLDataStorer::getInstance()->getConnector()->executeSelect(
+                        SQLDataStorer::GET_PLAYER_BY_NAME,
+                        [
+                            'playerName' => $args[1]
+                        ],
+                        function (array $rows, array $columns) use ($sender, $rank): void {
+                            if (count($rows) === 0) {
+                                $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                                return;
+                            }
+                            $data = $rows[0];
+                            $playerName = $data['playerName'];
+
+                            SQLDataStorer::getInstance()->getConnector()->executeChange(
+                                SQLDataStorer::UPDATE_PLAYER_BY_NAME,
+                                [
+                                    'playerName' => $playerName,
+                                    'primaryRank' => $rank->getEnumName(),
+                                    'secondaryRank' => $data['secondaryRank']
+                                ],
+                                fn(int $affectedRows) => $sender->sendMessage(TextFormat::colorize('&aYou have been added main rank ' . $rank->getColor() . $rank->getName() , ' &r&ato' . $playerName))
+                            );
+                        }
+                    );
+                } elseif (strtolower($args[1]) === 'secondary') {
+                    if (count($args) < 4) {
+                        $sender->sendMessage(TextFormat::colorize('&cUse /rank set secondary [player] [rank]'));
+                        return;
+                    }
+                    $player = $sender->getServer()->getPlayerByPrefix($args[2]);
+                    $rankName = $args[3];
+
+                    $secondaryRanks = array_filter(RankManager::getInstance()->getRanks(), fn(Rank $rank) => !$rank->isPrimary());
+                    $rank = $secondaryRanks[$rankName] ?? null;
+
+                    if ($rank === null) {
+                        $sender->sendMessage(TextFormat::colorize('&cSecondary rank no exists.'));
+                        return;
+                    }
+
+                    if ($player !== null) {
+                        $session = SessionManager::getInstance()->getSession($player);
+
+                        if ($session === null) {
+                            $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                            return;
+                        }
+                        $session->setSecondaryRank($rank);
+                        $player->sendMessage(TextFormat::colorize('&aYou have been received rank ' . $rank->getColor() . $rank->getName()));
+                        $sender->sendMessage(TextFormat::colorize('&aYou have been added rank ' . $rank->getColor() . $rank->getName() . ' &r&ato ' . $player->getName()));
+                        return;
+                    }
+                    SQLDataStorer::getInstance()->getConnector()->executeSelect(
+                        SQLDataStorer::GET_PLAYER_BY_NAME,
+                        [
+                            'playerName' => $args[1]
+                        ],
+                        function (array $rows, array $columns) use ($sender, $rank): void {
+                            if (count($rows) === 0) {
+                                $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                                return;
+                            }
+                            $data = $rows[0];
+                            $playerName = $data['playerName'];
+
+                            SQLDataStorer::getInstance()->getConnector()->executeChange(
+                                SQLDataStorer::UPDATE_PLAYER_BY_NAME,
+                                [
+                                    'playerName' => $playerName,
+                                    'primaryRank' => $data['primaryRank'],
+                                    'secondaryRank' => $rank->getEnumName()
+                                ],
+                                fn(int $affectedRows) => $sender->sendMessage(TextFormat::colorize('&aYou have been added rank ' . $rank->getColor() . $rank->getName() , ' &r&ato' . $playerName))
+                            );
+                        }
+                    );
+                } else {
+                    $sender->sendMessage(TextFormat::colorize('&cType invalid.'));
+                }
+                break;
+
+            case 'remove':
+                if (count($args) < 2) {
+                    $sender->sendMessage(TextFormat::colorize('&cUse /rank remove [player]'));
+                    return;
+                }
+                $player = $sender->getServer()->getPlayerByPrefix($args[1]);
+
+                if ($player !== null) {
+                    $session = SessionManager::getInstance()->getSession($player);
+
+                    if ($session === null) {
+                        $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                        return;
+                    }
+
+                    if ($session->getSecondaryRank() === null) {
+                        $sender->sendMessage(TextFormat::colorize('&cPlayer no has rank'));
+                        return;
+                    }
+                    $session->setSecondaryRank();
+                    $player->sendMessage(TextFormat::colorize('&cYou rank has been removed.'));
+                    $sender->sendMessage(TextFormat::colorize('&cYou have been removed ' . $player->getName() . '\'s rank'));
+                    return;
+                }
+                SQLDataStorer::getInstance()->getConnector()->executeSelect(
+                    SQLDataStorer::GET_PLAYER_BY_NAME,
+                    [
+                        'playerName' => $args[1]
+                    ],
+                    function (array $rows, array $columns) use ($sender): void {
+                        if (count($rows) === 0) {
+                            $sender->sendMessage(TextFormat::colorize('&cPlayer not found.'));
+                            return;
+                        }
+                        $data = $rows[0];
+
+                        if ($data['secondaryRank'] === '') {
+                            $sender->sendMessage(TextFormat::colorize('&cPlayer no has rank'));
+                            return;
+                        }
+                        SQLDataStorer::getInstance()->getConnector()->executeChange(
+                            SQLDataStorer::UPDATE_PLAYER_BY_NAME,
+                            [
+                                'playerName' => $data['playerName'],
+                                'primaryRank' => $data['primaryRank'],
+                                'secondaryRank' => ''
+                            ]
+                        );
+                        $sender->sendMessage(TextFormat::colorize('&cYou have been removed ' . $data['playerName'] . '\'s rank'));
+                    }
+                );
+                break;
+
             default:
                 $sender->sendMessage(TextFormat::colorize('&cInvalid rank subcommand. Use /rank help'));
                 break;

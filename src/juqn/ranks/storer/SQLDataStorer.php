@@ -21,7 +21,8 @@ final class SQLDataStorer {
     public const INSERT_PLAYER = 'insert.player';
     public const GET_PLAYER = 'get.player.xuid';
     public const GET_PLAYER_BY_NAME = 'get.player.name';
-    public const UPDATE_PLAYER = 'update.player';
+    public const UPDATE_PLAYER = 'update.player.xuid';
+    public const UPDATE_PLAYER_BY_NAME = 'update.player.name';
 
     private DataConnector $connector;
 

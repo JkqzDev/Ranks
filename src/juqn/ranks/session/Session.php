@@ -8,6 +8,7 @@ use juqn\ranks\rank\Rank;
 use juqn\ranks\rank\RankManager;
 use juqn\ranks\Ranks;
 use juqn\ranks\storer\SQLDataStorer;
+use pocketmine\permission\PermissionAttachment;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
 use RuntimeException;
@@ -19,6 +20,8 @@ final class Session {
 
     /** @var string[] */
     private array $permissions = [];
+    /** @var PermissionAttachment[] */
+    private array $attachments = [];
 
     private bool $changed = false;
 
@@ -80,16 +83,22 @@ final class Session {
     public function setPrimaryRank(Rank $primaryRank): void {
         $this->primaryRank = $primaryRank;
         $this->changed = true;
+
+        $this->updatePermissions();
     }
 
-    public function setSecondaryRank(?Rank $secondaryRank): void {
+    public function setSecondaryRank(?Rank $secondaryRank = null): void {
         $this->secondaryRank = $secondaryRank;
         $this->changed = true;
+
+        $this->updatePermissions();
     }
 
     public function addPermission(string $permission): void {
         $this->permissions[] = $permission;
         $this->changed = true;
+
+        $this->updatePermissions();
     }
 
     public function removePermission(string $permission): void {
@@ -98,23 +107,20 @@ final class Session {
         }
         unset($this->permissions[array_search($permission, $this->permissions)]);
         $this->changed = true;
+
+        $this->updatePermissions();
     }
 
     public function join(): void {
         $config = Ranks::getInstance()->getConfig();
         $primaryRank = $this->primaryRank;
         $secondaryRank = $this->secondaryRank;
-        $permissions = $this->permissions;
 
         if ($config->get('apply-nametag-format', false)) {
             $nametagFormat = str_replace(['{primaryRank}', '{secondaryRank}', '{player}'], [$primaryRank->getColor() . ' ' . $primaryRank->getName() . ' ', $secondaryRank !== null ? $secondaryRank->getColor() . ' ' . $secondaryRank->getName() . ' ' : '', $this->player->getName()], $config->get('nametag-format', ''));
             $this->player->setNameTag(TextFormat::colorize($nametagFormat));
         }
-        $permissions = array_merge($primaryRank->getPermissions(), $secondaryRank?->getPermissions() ?? [], $permissions);
-
-        foreach ($permissions as $permission) {
-            $this->player->addAttachment(Ranks::getInstance(), $permission, true);
-        }
+        $this->updatePermissions();
     }
 
     public function destroy(): void {
@@ -129,6 +135,24 @@ final class Session {
                     'permissions' => implode(',', $this->permissions)
                 ]
             );
+        }
+    }
+
+    private function updatePermissions(): void {
+        $primaryRank = $this->primaryRank;
+        $secondaryRank = $this->secondaryRank;
+        $permissions = $this->permissions;
+        $permissions = array_merge($primaryRank->getPermissions(), $secondaryRank?->getPermissions() ?? [], $permissions);
+
+        if (count($this->attachments) !== 0) {
+            foreach ($this->attachments as $attachment) {
+                $this->player->removeAttachment($attachment);
+            }
+            $this->attachments = [];
+        }
+
+        foreach ($permissions as $permission) {
+            $this->attachments[] = $this->player->addAttachment(Ranks::getInstance(), $permission, true);
         }
     }
 }

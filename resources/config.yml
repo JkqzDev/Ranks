@@ -17,6 +17,7 @@ database:
     file: database.sqlite
   mysql:
     host: juqngood
+    username: juqngood
     password: juqngood
     schema: juqn
   worker-limit: 2
