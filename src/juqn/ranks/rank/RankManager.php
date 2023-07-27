@@ -7,6 +7,7 @@ namespace juqn\ranks\rank;
 use juqn\ranks\Ranks;
 use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
+use RuntimeException;
 
 final class RankManager {
     use SingletonTrait;
@@ -35,7 +36,7 @@ final class RankManager {
         }
 
         if (!isset($this->ranks[$config->get('default-rank', 'user')])) {
-            throw new \RuntimeException('Invalid default rank');
+            throw new RuntimeException('Invalid default rank');
         }
     }
 }

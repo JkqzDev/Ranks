@@ -22,18 +22,22 @@ declare(strict_types=1);
 
 namespace poggit\libasynql\base;
 
+use ClassLoader;
 use InvalidArgumentException;
-use pmmp\thread\Thread as NativeThread;
 use pocketmine\Server;
-use pocketmine\snooze\SleeperHandlerEntry;
+use pocketmine\snooze\SleeperNotifier;
 use pocketmine\thread\Thread;
 use poggit\libasynql\libasynql;
 use poggit\libasynql\SqlError;
 use poggit\libasynql\SqlResult;
 use poggit\libasynql\SqlThread;
+use const PTHREADS_INHERIT_CONSTANTS;
+use const PTHREADS_INHERIT_INI;
+use function assert;
 
 abstract class SqlSlaveThread extends Thread implements SqlThread{
-	private SleeperHandlerEntry $sleeperEntry;
+	/** @var SleeperNotifier */
+	private $notifier;
 
 	private static $nextSlaveNumber = 0;
 
@@ -44,13 +48,12 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 	protected $connError;
 	protected $busy = false;
 
-	protected function __construct(SleeperHandlerEntry $entry, QuerySendQueue $bufferSend = null, QueryRecvQueue $bufferRecv = null){
-		$this->sleeperEntry = $entry;
+	protected function __construct(SleeperNotifier $notifier, QuerySendQueue $bufferSend = null, QueryRecvQueue $bufferRecv = null){
+		$this->notifier = $notifier;
 
 		$this->slaveNumber = self::$nextSlaveNumber++;
 		$this->bufferSend = $bufferSend ?? new QuerySendQueue();
 		$this->bufferRecv = $bufferRecv ?? new QueryRecvQueue();
-		$this->bufferRecv->addAvailableThread();
 
 		if(!libasynql::isPackaged()){
 			/** @noinspection PhpUndefinedMethodInspection */
@@ -59,7 +62,7 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 			$cl = Server::getInstance()->getPluginManager()->getPlugin("DEVirion")->getVirionClassLoader();
 			$this->setClassLoaders([Server::getInstance()->getLoader(), $cl]);
 		}
-		$this->start(NativeThread::INHERIT_INI);
+		$this->start(PTHREADS_INHERIT_INI | PTHREADS_INHERIT_CONSTANTS);
 	}
 
 	protected function onRun() : void{
@@ -67,16 +70,12 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 		$this->connCreated = true;
 		$this->connError = $error;
 
-		$notifier = $this->sleeperEntry->createNotifier();
-
 		if($error !== null){
 			return;
 		}
 
 		while(true){
-			$this->bufferRecv->removeAvailableThread();
 			$row = $this->bufferSend->fetchQuery();
-			$this->bufferRecv->addAvailableThread();
 			if(!is_string($row)){
 				break;
 			}
@@ -85,7 +84,7 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 
 			try{
 				$results = [];
-				foreach($queries as $index => $query){
+				foreach($queries as $index => $query) {
 					$results[] = $this->executeQuery($resource, $modes[$index], $query, $params[$index]);
 				}
 				$this->bufferRecv->publishResult($queryId, $results);
@@ -93,17 +92,16 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 				$this->bufferRecv->publishError($queryId, $error);
 			}
 
-			$notifier->wakeupSleeper();
+			$this->notifier->wakeupSleeper();
 			$this->busy = false;
 		}
-		$this->bufferRecv->removeAvailableThread();
 		$this->close($resource);
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isBusy() : bool{
+	public function isBusy(): bool {
 		return $this->busy;
 	}
 
@@ -122,8 +120,13 @@ abstract class SqlSlaveThread extends Thread implements SqlThread{
 		$this->bufferSend->scheduleQuery($queryId, $modes, $queries, $params);
 	}
 
-	public function readResults(array &$callbacks) : void{
-		while($this->bufferRecv->waitForResults($queryId, $results)){
+	public function readResults(array &$callbacks, ?int $expectedResults) : void{
+		if($expectedResults === null){
+			$resultsList = $this->bufferRecv->fetchAllResults();
+		}else{
+			$resultsList = $this->bufferRecv->waitForResults($expectedResults);
+		}
+		foreach($resultsList as [$queryId, $results]){
 			if(!isset($callbacks[$queryId])){
 				throw new InvalidArgumentException("Missing handler for query #$queryId");
 			}

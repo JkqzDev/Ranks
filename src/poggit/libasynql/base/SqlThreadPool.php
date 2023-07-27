@@ -24,12 +24,12 @@ namespace poggit\libasynql\base;
 
 use InvalidArgumentException;
 use pocketmine\Server;
-use pocketmine\snooze\SleeperHandlerEntry;
+use pocketmine\snooze\SleeperNotifier;
 use poggit\libasynql\SqlThread;
 
 class SqlThreadPool implements SqlThread{
-
-	private SleeperHandlerEntry $sleeperEntry;
+	/** @var SleeperNotifier */
+	private $notifier;
 	/** @var callable */
 	private $workerFactory;
 	/** @var SqlSlaveThread[] */
@@ -59,7 +59,8 @@ class SqlThreadPool implements SqlThread{
 	 * @param int      $workerLimit   the maximum number of workers to create. Workers are created lazily.
 	 */
 	public function __construct(callable $workerFactory, int $workerLimit){
-		$this->sleeperEntry = Server::getInstance()->getTickSleeper()->addNotifier(function() : void{
+		$this->notifier = new SleeperNotifier();
+		Server::getInstance()->getTickSleeper()->addNotifier($this->notifier, function() : void{
 			assert($this->dataConnector instanceof DataConnectorImpl); // otherwise, wtf
 			$this->dataConnector->checkResults();
 		});
@@ -73,7 +74,7 @@ class SqlThreadPool implements SqlThread{
 	}
 
 	private function addWorker() : void{
-		$this->workers[] = ($this->workerFactory)($this->sleeperEntry, $this->bufferSend, $this->bufferRecv);
+		$this->workers[] = ($this->workerFactory)($this->notifier, $this->bufferSend, $this->bufferRecv);
 	}
 
 	public function join() : void{
@@ -102,8 +103,13 @@ class SqlThreadPool implements SqlThread{
 		}
 	}
 
-	public function readResults(array &$callbacks) : void{
-		while($this->bufferRecv->waitForResults($queryId, $results)){
+	public function readResults(array &$callbacks, ?int $expectedResults) : void{
+		if($expectedResults === null){
+			$resultsList = $this->bufferRecv->fetchAllResults();
+		}else{
+			$resultsList = $this->bufferRecv->waitForResults($expectedResults);
+		}
+		foreach($resultsList as [$queryId, $results]){
 			if(!isset($callbacks[$queryId])){
 				throw new InvalidArgumentException("Missing handler for query #$queryId");
 			}

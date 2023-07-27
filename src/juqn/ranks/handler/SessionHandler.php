@@ -11,7 +11,6 @@ use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\player\chat\LegacyRawChatFormatter;
 use pocketmine\utils\TextFormat;
 
 final class SessionHandler implements Listener {
@@ -30,7 +29,7 @@ final class SessionHandler implements Listener {
             $secondaryRank = $session->getSecondaryRank();
             $chatFormat = str_replace(['{primaryRank}', '{secondaryRank}', '{player}', '{message}'], [$primaryRank->getName() !== '' ? $primaryRank->getColor() . $primaryRank->getName() . ' ' : '', $secondaryRank !== null ? $secondaryRank->getColor() . $secondaryRank->getName() . ' ' : '', $player->getName(), $event->getMessage()], $config->get('chat-format', ''));
 
-            $event->setFormatter(new LegacyRawChatFormatter(TextFormat::colorize($chatFormat)));
+            $event->setFormat(TextFormat::colorize($chatFormat));
         }
     }
 
