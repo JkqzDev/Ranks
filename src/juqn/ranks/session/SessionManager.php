@@ -8,10 +8,17 @@ use pocketmine\player\Player;
 use pocketmine\utils\SingletonTrait;
 
 final class SessionManager {
-    use SingletonTrait;
+    use SingletonTrait {
+        setInstance as protected;
+        reset as protected;
+    }
 
     /** @var Session[] */
     private array $sessions = [];
+
+    public function getSessions(): array {
+        return $this->sessions;
+    }
 
     public function getSession(Player $player): ?Session {
         return $this->sessions[$player->getXuid()] ?? null;
@@ -25,6 +32,9 @@ final class SessionManager {
         if (!isset($this->sessions[$player->getXuid()])) {
             return;
         }
+        $session = $this->sessions[$player->getXuid()];
+        $session->destroy();
+
         unset($this->sessions[$player->getXuid()]);
     }
 }
